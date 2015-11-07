@@ -45,8 +45,9 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1659' class='srclink' href='../src/rexif/types.rs.html#39-58' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1659' class='srclink' href='../src/rexif/types.rs.html#39-65' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct IfdEntry {
+    pub namespace: <a class='enum' href='../rexif/enum.Namespace.html' title='rexif::Namespace'>Namespace</a>,
     pub tag: <a href='http://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>,
     pub format: <a class='enum' href='../rexif/enum.IfdFormat.html' title='rexif::IfdFormat'>IfdFormat</a>,
     pub count: <a href='http://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>,
@@ -57,6 +58,10 @@
 }</pre><div class='docblock'><p>Structure that represents a parsed IFD entry of a TIFF image</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
+                                  <td id='structfield.namespace'><code>namespace</code></td><td><div class='docblock'><p>Namespace of the entry. Standard is a tag found in normal TIFF IFD structure,
+other namespaces are entries found e.g. within MarkerNote blobs that are
+manufacturer-specific.</p>
+</div></td></tr><tr class='stab '>
                                   <td id='structfield.tag'><code>tag</code></td><td><div class='docblock'><p>IFD tag value, may or not be an EXIF tag</p>
 </div></td></tr><tr class='stab '>
                                   <td id='structfield.format'><code>format</code></td><td><div class='docblock'><p>IFD data format</p>
@@ -72,8 +77,11 @@ this item contains the offset where the actual data can be found</p>
                                   <td id='structfield.ext_data'><code>ext_data</code></td><td><div class='docblock'><p>Raw data contained outside of the IFD structure and pointed by ifd_data,
 if data would not fit within the IFD structure</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.le'><code>le</code></td><td><div class='docblock'><p>If true, integer and offset formats must be parsed from raw data as little-endian
-If false, integer and offset formats must be parsed from raw data as big-endian</p>
+                                  <td id='structfield.le'><code>le</code></td><td><div class='docblock'><p>If true, integer and offset formats must be parsed from raw data as little-endian.
+If false, integer and offset formats must be parsed from raw data as big-endian.</p>
+
+<p>It is important to have &#39;endianess&#39; per IFD entry, because some manufacturer-specific
+entries may have fixed endianess (regardeless of TIFF container&#39;s general endianess).</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../rexif/struct.IfdEntry.html' title='rexif::IfdEntry'>IfdEntry</a></code></h3><div class='impl-items'><h4 id='method.data_as_offset' class='method'><code>fn <a href='#method.data_as_offset' class='fnname'>data_as_offset</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
 <div class='docblock'><p>Casts IFD entry data into an offset. Not very useful for the crate client.
 The call can&#39;t fail, but the caller must be sure that the IFD entry uses

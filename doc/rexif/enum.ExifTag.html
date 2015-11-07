@@ -45,7 +45,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1743' class='srclink' href='../src/rexif/types.rs.html#64-169' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1952' class='srclink' href='../src/rexif/types.rs.html#88-193' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum ExifTag {
     UnknownToMe,
     ImageDescription,
@@ -149,7 +149,13 @@
     GPSDifferential,
 }</pre><div class='docblock'><p>Enumeration that represents recognized EXIF tags found in TIFF IFDs.</p>
 
-<p>Items can be cast to u16 in order to get the code for the EXIF tag.</p>
+<p>Items can be cast to u32 in order to get the namespace (most significant word)
+and tag code (least significant word). The tag code matches the Exif, or the
+Makernote standard, depending on the namespace that the tag belongs to.
+On the other hand, the namespace code is arbitrary, it only matches
+the <code>Namespace</code> enumeration. The namespace is 0 for standard Exif tags.
+The non-standard namespaces exist to accomodate future parsing of the
+MarkerNote tag, that contains embedded manufacturer-specific tags.</p>
 </div><h2 class='variants'>Variants</h2>
 <table><tr><td id='variant.UnknownToMe'><code>UnknownToMe</code></td><td><div class='docblock'><p>Tag not recognized are partially parsed. The client may still try to interpret
 the tag by reading into the IfdFormat structure.</p>

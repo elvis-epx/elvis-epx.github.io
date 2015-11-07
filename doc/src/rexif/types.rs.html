@@ -315,6 +315,34 @@
 <span id="273">273</span>
 <span id="274">274</span>
 <span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>rational</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>result</span>::<span class='prelude-ty'>Result</span>;
@@ -355,6 +383,10 @@
 <span class='doccomment'>/// Structure that represents a parsed IFD entry of a TIFF image</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>IfdEntry</span> {
+	<span class='doccomment'>/// Namespace of the entry. Standard is a tag found in normal TIFF IFD structure,</span>
+	<span class='doccomment'>/// other namespaces are entries found e.g. within MarkerNote blobs that are</span>
+	<span class='doccomment'>/// manufacturer-specific.</span>
+	<span class='kw'>pub</span> <span class='ident'>namespace</span>: <span class='ident'>Namespace</span>,
 	<span class='doccomment'>/// IFD tag value, may or not be an EXIF tag</span>
 	<span class='kw'>pub</span> <span class='ident'>tag</span>: <span class='ident'>u16</span>,
 	<span class='doccomment'>/// IFD data format</span>
@@ -370,120 +402,140 @@
 	<span class='doccomment'>/// Raw data contained outside of the IFD structure and pointed by ifd_data,</span>
 	<span class='doccomment'>/// if data would not fit within the IFD structure</span>
 	<span class='kw'>pub</span> <span class='ident'>ext_data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>,
-	<span class='doccomment'>/// If true, integer and offset formats must be parsed from raw data as little-endian</span>
-	<span class='doccomment'>/// If false, integer and offset formats must be parsed from raw data as big-endian</span>
+	<span class='doccomment'>/// If true, integer and offset formats must be parsed from raw data as little-endian.</span>
+	<span class='doccomment'>/// If false, integer and offset formats must be parsed from raw data as big-endian.</span>
+	<span class='doccomment'>///</span>
+	<span class='doccomment'>/// It is important to have &#39;endianess&#39; per IFD entry, because some manufacturer-specific</span>
+	<span class='doccomment'>/// entries may have fixed endianess (regardeless of TIFF container&#39;s general endianess).</span>
 	<span class='kw'>pub</span> <span class='ident'>le</span>: <span class='ident'>bool</span>,
+}
+
+<span class='doccomment'>/// Enumeration that represent EXIF tag namespaces. Namespaces exist to</span>
+<span class='doccomment'>/// accomodate future parsing of the manufacturer-specific tags embedded within</span>
+<span class='doccomment'>/// the MarkerNote tag.</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>, <span class='ident'>Clone</span>, <span class='ident'>PartialEq</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>Namespace</span> {
+	<span class='ident'>Standard</span> <span class='op'>=</span> <span class='number'>0x0000</span>,
+	<span class='ident'>Nikon</span> <span class='op'>=</span> <span class='number'>0x0001</span>,
+	<span class='ident'>Canon</span> <span class='op'>=</span> <span class='number'>0x0002</span>,
 }
 
 <span class='doccomment'>/// Enumeration that represents recognized EXIF tags found in TIFF IFDs.</span>
 <span class='doccomment'>///</span>
-<span class='doccomment'>/// Items can be cast to u16 in order to get the code for the EXIF tag.</span>
+<span class='doccomment'>/// Items can be cast to u32 in order to get the namespace (most significant word)</span>
+<span class='doccomment'>/// and tag code (least significant word). The tag code matches the Exif, or the</span>
+<span class='doccomment'>/// Makernote standard, depending on the namespace that the tag belongs to.</span>
+
+<span class='doccomment'>/// On the other hand, the namespace code is arbitrary, it only matches</span>
+<span class='doccomment'>/// the `Namespace` enumeration. The namespace is 0 for standard Exif tags.</span>
+<span class='doccomment'>/// The non-standard namespaces exist to accomodate future parsing of the</span>
+<span class='doccomment'>/// MarkerNote tag, that contains embedded manufacturer-specific tags.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>, <span class='ident'>Clone</span>, <span class='ident'>PartialEq</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>ExifTag</span> {
 	<span class='doccomment'>/// Tag not recognized are partially parsed. The client may still try to interpret</span>
 	<span class='doccomment'>/// the tag by reading into the IfdFormat structure.</span>
-	<span class='ident'>UnknownToMe</span> <span class='op'>=</span> <span class='number'>0xffff</span>,
-	<span class='ident'>ImageDescription</span> <span class='op'>=</span> <span class='number'>0x010e</span>,
-	<span class='ident'>Make</span> <span class='op'>=</span> <span class='number'>0x010f</span>,
-	<span class='ident'>Model</span> <span class='op'>=</span> <span class='number'>0x0110</span>,
-	<span class='ident'>Orientation</span> <span class='op'>=</span> <span class='number'>0x0112</span>,
-	<span class='ident'>XResolution</span> <span class='op'>=</span> <span class='number'>0x011a</span>,
-	<span class='ident'>YResolution</span> <span class='op'>=</span> <span class='number'>0x011b</span>,
-	<span class='ident'>ResolutionUnit</span> <span class='op'>=</span> <span class='number'>0x0128</span>,
-	<span class='ident'>Software</span> <span class='op'>=</span> <span class='number'>0x0131</span>,
-	<span class='ident'>DateTime</span> <span class='op'>=</span> <span class='number'>0x0132</span>,
-	<span class='ident'>HostComputer</span> <span class='op'>=</span> <span class='number'>0x013c</span>,
-	<span class='ident'>WhitePoint</span> <span class='op'>=</span> <span class='number'>0x013e</span>,
-	<span class='ident'>PrimaryChromaticities</span> <span class='op'>=</span> <span class='number'>0x013f</span>,
-	<span class='ident'>YCbCrCoefficients</span> <span class='op'>=</span> <span class='number'>0x0211</span>,
-	<span class='ident'>ReferenceBlackWhite</span> <span class='op'>=</span> <span class='number'>0x0214</span>,
-	<span class='ident'>Copyright</span> <span class='op'>=</span> <span class='number'>0x8298</span>,
-	<span class='ident'>ExifOffset</span> <span class='op'>=</span> <span class='number'>0x8769</span>,
-	<span class='ident'>GPSOffset</span> <span class='op'>=</span> <span class='number'>0x8825</span>,
+	<span class='ident'>UnknownToMe</span> <span class='op'>=</span> <span class='number'>0x0000ffff</span>,
+	<span class='ident'>ImageDescription</span> <span class='op'>=</span> <span class='number'>0x0000010e</span>,
+	<span class='ident'>Make</span> <span class='op'>=</span> <span class='number'>0x0000010f</span>,
+	<span class='ident'>Model</span> <span class='op'>=</span> <span class='number'>0x00000110</span>,
+	<span class='ident'>Orientation</span> <span class='op'>=</span> <span class='number'>0x00000112</span>,
+	<span class='ident'>XResolution</span> <span class='op'>=</span> <span class='number'>0x0000011a</span>,
+	<span class='ident'>YResolution</span> <span class='op'>=</span> <span class='number'>0x0000011b</span>,
+	<span class='ident'>ResolutionUnit</span> <span class='op'>=</span> <span class='number'>0x00000128</span>,
+	<span class='ident'>Software</span> <span class='op'>=</span> <span class='number'>0x00000131</span>,
+	<span class='ident'>DateTime</span> <span class='op'>=</span> <span class='number'>0x00000132</span>,
+	<span class='ident'>HostComputer</span> <span class='op'>=</span> <span class='number'>0x0000013c</span>,
+	<span class='ident'>WhitePoint</span> <span class='op'>=</span> <span class='number'>0x0000013e</span>,
+	<span class='ident'>PrimaryChromaticities</span> <span class='op'>=</span> <span class='number'>0x0000013f</span>,
+	<span class='ident'>YCbCrCoefficients</span> <span class='op'>=</span> <span class='number'>0x00000211</span>,
+	<span class='ident'>ReferenceBlackWhite</span> <span class='op'>=</span> <span class='number'>0x00000214</span>,
+	<span class='ident'>Copyright</span> <span class='op'>=</span> <span class='number'>0x00008298</span>,
+	<span class='ident'>ExifOffset</span> <span class='op'>=</span> <span class='number'>0x00008769</span>,
+	<span class='ident'>GPSOffset</span> <span class='op'>=</span> <span class='number'>0x00008825</span>,
 
-	<span class='ident'>ExposureTime</span> <span class='op'>=</span> <span class='number'>0x829a</span>,
-	<span class='ident'>FNumber</span> <span class='op'>=</span> <span class='number'>0x829d</span>,
-	<span class='ident'>ExposureProgram</span> <span class='op'>=</span> <span class='number'>0x8822</span>,
-	<span class='ident'>SpectralSensitivity</span> <span class='op'>=</span> <span class='number'>0x8824</span>,
-	<span class='ident'>ISOSpeedRatings</span> <span class='op'>=</span> <span class='number'>0x8827</span>,
-	<span class='ident'>OECF</span> <span class='op'>=</span> <span class='number'>0x8828</span>,
-	<span class='ident'>ExifVersion</span> <span class='op'>=</span> <span class='number'>0x9000</span>,
-	<span class='ident'>DateTimeOriginal</span> <span class='op'>=</span> <span class='number'>0x9003</span>,
-	<span class='ident'>DateTimeDigitized</span> <span class='op'>=</span> <span class='number'>0x9004</span>,
-	<span class='ident'>ShutterSpeedValue</span> <span class='op'>=</span> <span class='number'>0x9201</span>,
-	<span class='ident'>ApertureValue</span> <span class='op'>=</span> <span class='number'>0x9202</span>,
-	<span class='ident'>BrightnessValue</span> <span class='op'>=</span> <span class='number'>0x9203</span>,
-	<span class='ident'>ExposureBiasValue</span> <span class='op'>=</span> <span class='number'>0x9204</span>,
-	<span class='ident'>MaxApertureValue</span> <span class='op'>=</span> <span class='number'>0x9205</span>,
-	<span class='ident'>SubjectDistance</span> <span class='op'>=</span> <span class='number'>0x9206</span>,
-	<span class='ident'>MeteringMode</span> <span class='op'>=</span> <span class='number'>0x9207</span>,
-	<span class='ident'>LightSource</span> <span class='op'>=</span> <span class='number'>0x9208</span>,
-	<span class='ident'>Flash</span> <span class='op'>=</span> <span class='number'>0x9209</span>,
-	<span class='ident'>FocalLength</span> <span class='op'>=</span> <span class='number'>0x920a</span>,
-	<span class='ident'>SubjectArea</span> <span class='op'>=</span> <span class='number'>0x9214</span>,
-	<span class='ident'>MakerNote</span> <span class='op'>=</span> <span class='number'>0x927c</span>,
-	<span class='ident'>UserComment</span> <span class='op'>=</span> <span class='number'>0x9286</span>,
-	<span class='ident'>FlashPixVersion</span> <span class='op'>=</span> <span class='number'>0xa000</span>,
-	<span class='ident'>ColorSpace</span> <span class='op'>=</span> <span class='number'>0xa001</span>,
-	<span class='ident'>RelatedSoundFile</span> <span class='op'>=</span> <span class='number'>0xa004</span>,
-	<span class='ident'>FlashEnergy</span> <span class='op'>=</span> <span class='number'>0xa20b</span>,
-	<span class='ident'>FocalPlaneXResolution</span> <span class='op'>=</span> <span class='number'>0xa20e</span>,
-	<span class='ident'>FocalPlaneYResolution</span> <span class='op'>=</span> <span class='number'>0xa20f</span>,
-	<span class='ident'>FocalPlaneResolutionUnit</span> <span class='op'>=</span> <span class='number'>0xa210</span>,
-	<span class='ident'>SubjectLocation</span> <span class='op'>=</span> <span class='number'>0xa214</span>,
-	<span class='ident'>ExposureIndex</span> <span class='op'>=</span> <span class='number'>0xa215</span>,
-	<span class='ident'>SensingMethod</span> <span class='op'>=</span> <span class='number'>0xa217</span>,
-	<span class='ident'>FileSource</span> <span class='op'>=</span> <span class='number'>0xa300</span>,
-	<span class='ident'>SceneType</span> <span class='op'>=</span> <span class='number'>0xa301</span>,
-	<span class='ident'>CFAPattern</span> <span class='op'>=</span> <span class='number'>0xa302</span>,
-	<span class='ident'>CustomRendered</span> <span class='op'>=</span> <span class='number'>0xa401</span>,
-	<span class='ident'>ExposureMode</span> <span class='op'>=</span> <span class='number'>0xa402</span>,
-	<span class='ident'>WhiteBalanceMode</span> <span class='op'>=</span> <span class='number'>0xa403</span>,
-	<span class='ident'>DigitalZoomRatio</span> <span class='op'>=</span> <span class='number'>0xa404</span>,
-	<span class='ident'>FocalLengthIn35mmFilm</span> <span class='op'>=</span> <span class='number'>0xa405</span>,
-	<span class='ident'>SceneCaptureType</span> <span class='op'>=</span> <span class='number'>0xa406</span>,
-	<span class='ident'>GainControl</span> <span class='op'>=</span> <span class='number'>0xa407</span>,
-	<span class='ident'>Contrast</span> <span class='op'>=</span> <span class='number'>0xa408</span>,
-	<span class='ident'>Saturation</span> <span class='op'>=</span> <span class='number'>0xa409</span>,
-	<span class='ident'>Sharpness</span> <span class='op'>=</span> <span class='number'>0xa40a</span>,
-	<span class='ident'>DeviceSettingDescription</span> <span class='op'>=</span> <span class='number'>0xa40b</span>,
-	<span class='ident'>SubjectDistanceRange</span> <span class='op'>=</span> <span class='number'>0xa40c</span>,
-	<span class='ident'>ImageUniqueID</span> <span class='op'>=</span> <span class='number'>0xa420</span>,
-	<span class='ident'>LensSpecification</span> <span class='op'>=</span> <span class='number'>0xa432</span>,
-	<span class='ident'>LensMake</span> <span class='op'>=</span> <span class='number'>0xa433</span>,
-	<span class='ident'>LensModel</span> <span class='op'>=</span> <span class='number'>0xa434</span>,
+	<span class='ident'>ExposureTime</span> <span class='op'>=</span> <span class='number'>0x0000829a</span>,
+	<span class='ident'>FNumber</span> <span class='op'>=</span> <span class='number'>0x0000829d</span>,
+	<span class='ident'>ExposureProgram</span> <span class='op'>=</span> <span class='number'>0x00008822</span>,
+	<span class='ident'>SpectralSensitivity</span> <span class='op'>=</span> <span class='number'>0x00008824</span>,
+	<span class='ident'>ISOSpeedRatings</span> <span class='op'>=</span> <span class='number'>0x00008827</span>,
+	<span class='ident'>OECF</span> <span class='op'>=</span> <span class='number'>0x00008828</span>,
+	<span class='ident'>ExifVersion</span> <span class='op'>=</span> <span class='number'>0x00009000</span>,
+	<span class='ident'>DateTimeOriginal</span> <span class='op'>=</span> <span class='number'>0x00009003</span>,
+	<span class='ident'>DateTimeDigitized</span> <span class='op'>=</span> <span class='number'>0x00009004</span>,
+	<span class='ident'>ShutterSpeedValue</span> <span class='op'>=</span> <span class='number'>0x00009201</span>,
+	<span class='ident'>ApertureValue</span> <span class='op'>=</span> <span class='number'>0x00009202</span>,
+	<span class='ident'>BrightnessValue</span> <span class='op'>=</span> <span class='number'>0x00009203</span>,
+	<span class='ident'>ExposureBiasValue</span> <span class='op'>=</span> <span class='number'>0x00009204</span>,
+	<span class='ident'>MaxApertureValue</span> <span class='op'>=</span> <span class='number'>0x00009205</span>,
+	<span class='ident'>SubjectDistance</span> <span class='op'>=</span> <span class='number'>0x00009206</span>,
+	<span class='ident'>MeteringMode</span> <span class='op'>=</span> <span class='number'>0x00009207</span>,
+	<span class='ident'>LightSource</span> <span class='op'>=</span> <span class='number'>0x00009208</span>,
+	<span class='ident'>Flash</span> <span class='op'>=</span> <span class='number'>0x00009209</span>,
+	<span class='ident'>FocalLength</span> <span class='op'>=</span> <span class='number'>0x0000920a</span>,
+	<span class='ident'>SubjectArea</span> <span class='op'>=</span> <span class='number'>0x00009214</span>,
+	<span class='ident'>MakerNote</span> <span class='op'>=</span> <span class='number'>0x0000927c</span>,
+	<span class='ident'>UserComment</span> <span class='op'>=</span> <span class='number'>0x00009286</span>,
+	<span class='ident'>FlashPixVersion</span> <span class='op'>=</span> <span class='number'>0x0000a000</span>,
+	<span class='ident'>ColorSpace</span> <span class='op'>=</span> <span class='number'>0x0000a001</span>,
+	<span class='ident'>RelatedSoundFile</span> <span class='op'>=</span> <span class='number'>0x0000a004</span>,
+	<span class='ident'>FlashEnergy</span> <span class='op'>=</span> <span class='number'>0x0000a20b</span>,
+	<span class='ident'>FocalPlaneXResolution</span> <span class='op'>=</span> <span class='number'>0x0000a20e</span>,
+	<span class='ident'>FocalPlaneYResolution</span> <span class='op'>=</span> <span class='number'>0x0000a20f</span>,
+	<span class='ident'>FocalPlaneResolutionUnit</span> <span class='op'>=</span> <span class='number'>0x0000a210</span>,
+	<span class='ident'>SubjectLocation</span> <span class='op'>=</span> <span class='number'>0x0000a214</span>,
+	<span class='ident'>ExposureIndex</span> <span class='op'>=</span> <span class='number'>0x0000a215</span>,
+	<span class='ident'>SensingMethod</span> <span class='op'>=</span> <span class='number'>0x0000a217</span>,
+	<span class='ident'>FileSource</span> <span class='op'>=</span> <span class='number'>0x0000a300</span>,
+	<span class='ident'>SceneType</span> <span class='op'>=</span> <span class='number'>0x0000a301</span>,
+	<span class='ident'>CFAPattern</span> <span class='op'>=</span> <span class='number'>0x0000a302</span>,
+	<span class='ident'>CustomRendered</span> <span class='op'>=</span> <span class='number'>0x0000a401</span>,
+	<span class='ident'>ExposureMode</span> <span class='op'>=</span> <span class='number'>0x0000a402</span>,
+	<span class='ident'>WhiteBalanceMode</span> <span class='op'>=</span> <span class='number'>0x0000a403</span>,
+	<span class='ident'>DigitalZoomRatio</span> <span class='op'>=</span> <span class='number'>0x0000a404</span>,
+	<span class='ident'>FocalLengthIn35mmFilm</span> <span class='op'>=</span> <span class='number'>0x0000a405</span>,
+	<span class='ident'>SceneCaptureType</span> <span class='op'>=</span> <span class='number'>0x0000a406</span>,
+	<span class='ident'>GainControl</span> <span class='op'>=</span> <span class='number'>0x0000a407</span>,
+	<span class='ident'>Contrast</span> <span class='op'>=</span> <span class='number'>0x0000a408</span>,
+	<span class='ident'>Saturation</span> <span class='op'>=</span> <span class='number'>0x0000a409</span>,
+	<span class='ident'>Sharpness</span> <span class='op'>=</span> <span class='number'>0x0000a40a</span>,
+	<span class='ident'>DeviceSettingDescription</span> <span class='op'>=</span> <span class='number'>0x0000a40b</span>,
+	<span class='ident'>SubjectDistanceRange</span> <span class='op'>=</span> <span class='number'>0x0000a40c</span>,
+	<span class='ident'>ImageUniqueID</span> <span class='op'>=</span> <span class='number'>0x0000a420</span>,
+	<span class='ident'>LensSpecification</span> <span class='op'>=</span> <span class='number'>0x0000a432</span>,
+	<span class='ident'>LensMake</span> <span class='op'>=</span> <span class='number'>0x0000a433</span>,
+	<span class='ident'>LensModel</span> <span class='op'>=</span> <span class='number'>0x0000a434</span>,
 		
-	<span class='ident'>GPSVersionID</span> <span class='op'>=</span> <span class='number'>0x0</span>,
-	<span class='ident'>GPSLatitudeRef</span> <span class='op'>=</span> <span class='number'>0x1</span>,
-	<span class='ident'>GPSLatitude</span> <span class='op'>=</span> <span class='number'>0x2</span>,
-	<span class='ident'>GPSLongitudeRef</span> <span class='op'>=</span> <span class='number'>0x3</span>,
-	<span class='ident'>GPSLongitude</span> <span class='op'>=</span> <span class='number'>0x4</span>,
-	<span class='ident'>GPSAltitudeRef</span> <span class='op'>=</span> <span class='number'>0x5</span>,
-	<span class='ident'>GPSAltitude</span> <span class='op'>=</span> <span class='number'>0x6</span>,
-	<span class='ident'>GPSTimeStamp</span> <span class='op'>=</span> <span class='number'>0x7</span>,
-	<span class='ident'>GPSSatellites</span> <span class='op'>=</span> <span class='number'>0x8</span>,
-	<span class='ident'>GPSStatus</span> <span class='op'>=</span> <span class='number'>0x9</span>,
-	<span class='ident'>GPSMeasureMode</span> <span class='op'>=</span> <span class='number'>0xa</span>,
-	<span class='ident'>GPSDOP</span> <span class='op'>=</span> <span class='number'>0xb</span>,
-	<span class='ident'>GPSSpeedRef</span> <span class='op'>=</span> <span class='number'>0xc</span>,
-	<span class='ident'>GPSSpeed</span> <span class='op'>=</span> <span class='number'>0xd</span>,
-	<span class='ident'>GPSTrackRef</span> <span class='op'>=</span> <span class='number'>0xe</span>,
-	<span class='ident'>GPSTrack</span> <span class='op'>=</span> <span class='number'>0xf</span>,
-	<span class='ident'>GPSImgDirectionRef</span> <span class='op'>=</span> <span class='number'>0x10</span>,
-	<span class='ident'>GPSImgDirection</span> <span class='op'>=</span> <span class='number'>0x11</span>,
-	<span class='ident'>GPSMapDatum</span> <span class='op'>=</span> <span class='number'>0x12</span>,
-	<span class='ident'>GPSDestLatitudeRef</span> <span class='op'>=</span> <span class='number'>0x13</span>,
-	<span class='ident'>GPSDestLatitude</span> <span class='op'>=</span> <span class='number'>0x14</span>,
-	<span class='ident'>GPSDestLongitudeRef</span> <span class='op'>=</span> <span class='number'>0x15</span>,
-	<span class='ident'>GPSDestLongitude</span> <span class='op'>=</span> <span class='number'>0x16</span>,
-	<span class='ident'>GPSDestBearingRef</span> <span class='op'>=</span> <span class='number'>0x17</span>,
-	<span class='ident'>GPSDestBearing</span> <span class='op'>=</span> <span class='number'>0x18</span>,
-	<span class='ident'>GPSDestDistanceRef</span> <span class='op'>=</span> <span class='number'>0x19</span>,
-	<span class='ident'>GPSDestDistance</span> <span class='op'>=</span> <span class='number'>0x1a</span>,
-	<span class='ident'>GPSProcessingMethod</span> <span class='op'>=</span> <span class='number'>0x1b</span>,
-	<span class='ident'>GPSAreaInformation</span> <span class='op'>=</span> <span class='number'>0x1c</span>,
-	<span class='ident'>GPSDateStamp</span> <span class='op'>=</span> <span class='number'>0x1d</span>,
-	<span class='ident'>GPSDifferential</span> <span class='op'>=</span> <span class='number'>0x1e</span>,
+	<span class='ident'>GPSVersionID</span> <span class='op'>=</span> <span class='number'>0x00000</span>,
+	<span class='ident'>GPSLatitudeRef</span> <span class='op'>=</span> <span class='number'>0x00001</span>,
+	<span class='ident'>GPSLatitude</span> <span class='op'>=</span> <span class='number'>0x00002</span>,
+	<span class='ident'>GPSLongitudeRef</span> <span class='op'>=</span> <span class='number'>0x00003</span>,
+	<span class='ident'>GPSLongitude</span> <span class='op'>=</span> <span class='number'>0x00004</span>,
+	<span class='ident'>GPSAltitudeRef</span> <span class='op'>=</span> <span class='number'>0x00005</span>,
+	<span class='ident'>GPSAltitude</span> <span class='op'>=</span> <span class='number'>0x00006</span>,
+	<span class='ident'>GPSTimeStamp</span> <span class='op'>=</span> <span class='number'>0x00007</span>,
+	<span class='ident'>GPSSatellites</span> <span class='op'>=</span> <span class='number'>0x00008</span>,
+	<span class='ident'>GPSStatus</span> <span class='op'>=</span> <span class='number'>0x00009</span>,
+	<span class='ident'>GPSMeasureMode</span> <span class='op'>=</span> <span class='number'>0x0000a</span>,
+	<span class='ident'>GPSDOP</span> <span class='op'>=</span> <span class='number'>0x0000b</span>,
+	<span class='ident'>GPSSpeedRef</span> <span class='op'>=</span> <span class='number'>0x0000c</span>,
+	<span class='ident'>GPSSpeed</span> <span class='op'>=</span> <span class='number'>0x0000d</span>,
+	<span class='ident'>GPSTrackRef</span> <span class='op'>=</span> <span class='number'>0x0000e</span>,
+	<span class='ident'>GPSTrack</span> <span class='op'>=</span> <span class='number'>0x0000f</span>,
+	<span class='ident'>GPSImgDirectionRef</span> <span class='op'>=</span> <span class='number'>0x000010</span>,
+	<span class='ident'>GPSImgDirection</span> <span class='op'>=</span> <span class='number'>0x000011</span>,
+	<span class='ident'>GPSMapDatum</span> <span class='op'>=</span> <span class='number'>0x000012</span>,
+	<span class='ident'>GPSDestLatitudeRef</span> <span class='op'>=</span> <span class='number'>0x000013</span>,
+	<span class='ident'>GPSDestLatitude</span> <span class='op'>=</span> <span class='number'>0x000014</span>,
+	<span class='ident'>GPSDestLongitudeRef</span> <span class='op'>=</span> <span class='number'>0x000015</span>,
+	<span class='ident'>GPSDestLongitude</span> <span class='op'>=</span> <span class='number'>0x000016</span>,
+	<span class='ident'>GPSDestBearingRef</span> <span class='op'>=</span> <span class='number'>0x000017</span>,
+	<span class='ident'>GPSDestBearing</span> <span class='op'>=</span> <span class='number'>0x000018</span>,
+	<span class='ident'>GPSDestDistanceRef</span> <span class='op'>=</span> <span class='number'>0x000019</span>,
+	<span class='ident'>GPSDestDistance</span> <span class='op'>=</span> <span class='number'>0x00001a</span>,
+	<span class='ident'>GPSProcessingMethod</span> <span class='op'>=</span> <span class='number'>0x00001b</span>,
+	<span class='ident'>GPSAreaInformation</span> <span class='op'>=</span> <span class='number'>0x00001c</span>,
+	<span class='ident'>GPSDateStamp</span> <span class='op'>=</span> <span class='number'>0x00001d</span>,
+	<span class='ident'>GPSDifferential</span> <span class='op'>=</span> <span class='number'>0x00001e</span>,
 }
 
 <span class='doccomment'>/// Enumeration that represents the possible data formats of an IFD entry.</span>
@@ -510,6 +562,10 @@
 <span class='doccomment'>/// Structure that represents a parsed EXIF tag.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ExifEntry</span> {
+	<span class='doccomment'>/// Namespace of the tag. If Standard (0x0000), it is an EXIF tag defined in the</span>
+	<span class='doccomment'>/// official standard. Other namespaces accomodate manufacturer-specific tags that</span>
+	<span class='doccomment'>/// may be embedded in MarkerNote blob tag.</span>
+	<span class='kw'>pub</span> <span class='ident'>namespace</span>: <span class='ident'>Namespace</span>,
 	<span class='doccomment'>/// Low-level IFD entry that contains the EXIF tag. The client may look into this</span>
 	<span class='doccomment'>/// structure to get tag&#39;s raw data, or to parse the tag herself if `tag` is `UnknownToMe`.</span>
 	<span class='kw'>pub</span> <span class='ident'>ifd</span>: <span class='ident'>IfdEntry</span>,

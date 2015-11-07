@@ -45,8 +45,9 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4069' class='srclink' href='../src/rexif/types.rs.html#194-225' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-4278' class='srclink' href='../src/rexif/types.rs.html#218-253' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ExifEntry {
+    pub namespace: <a class='enum' href='../rexif/enum.Namespace.html' title='rexif::Namespace'>Namespace</a>,
     pub ifd: <a class='struct' href='../rexif/struct.IfdEntry.html' title='rexif::IfdEntry'>IfdEntry</a>,
     pub tag: <a class='enum' href='../rexif/enum.ExifTag.html' title='rexif::ExifTag'>ExifTag</a>,
     pub value: <a class='enum' href='../rexif/enum.TagValue.html' title='rexif::TagValue'>TagValue</a>,
@@ -57,6 +58,10 @@
 }</pre><div class='docblock'><p>Structure that represents a parsed EXIF tag.</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
+                                  <td id='structfield.namespace'><code>namespace</code></td><td><div class='docblock'><p>Namespace of the tag. If Standard (0x0000), it is an EXIF tag defined in the
+official standard. Other namespaces accomodate manufacturer-specific tags that
+may be embedded in MarkerNote blob tag.</p>
+</div></td></tr><tr class='stab '>
                                   <td id='structfield.ifd'><code>ifd</code></td><td><div class='docblock'><p>Low-level IFD entry that contains the EXIF tag. The client may look into this
 structure to get tag&#39;s raw data, or to parse the tag herself if <code>tag</code> is <code>UnknownToMe</code>.</p>
 </div></td></tr><tr class='stab '>
