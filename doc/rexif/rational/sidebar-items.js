@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["IRational","Encapsulation of the TIFF type that represents a signed rational number"],["URational","Encapsulation of the TIFF type that represents an unsigned rational number"]]});

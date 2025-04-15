@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["ifdformat_new","Convert an IFD format code to the IfdFormat enumeration"]]});
